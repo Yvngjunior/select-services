@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Service Portal</title>
+  <!-- jsPDF for PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- docx.js for Word -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.0.4/docx.umd.min.js"></script>
+
+  <style>
+    body { 
+	    font-family: Arial, sans-serif;
+	    padding: 20px; 
+	    background: #f4f6f9;
+    }
+    h3, h4 { color: #333; }
+
+    input, select, textarea, button {
+      margin: 8px 0; 
+	    padding: 8px; 
+	    width: 280px;
+      border: 1px solid #ccc; 
+       border-radius: 6px;
+    }
+    button {
+      width: auto; 
+	    cursor: pointer; 
+	    background: #007BFF;
+      color: white; 
+	    border: none; 
+	    font-weight: bold;
+      padding: 8px 12px;
+	    margin-right: 6px;
+      border-radius: 6px; 
+	transition: 0.3s;
+    }
+    button:hover { background: #0056b3; }
+
+    .form-container {
+      margin-top: 20px; 
+	    padding: 15px;
+      border: 1px solid #ccc; 
+	    border-radius: 8px;
+      background: #fff; 
+	    display: none;
+      box-shadow: 0px 3px 6px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h3>WE OFFER THE FOLLOWING SERVICES</h3>
+  <h4>PHOTOCOPY & PRINTING</h4>
+
+  <!-- Search box -->
+  <input type="search" id="searchBox" placeholder="Search services...">
+
+  <!-- Dropdown -->
+  <select id="serviceList" size="5">
+    <option value="application">PROF. APPLICATION LETTER</option>
+    <option value="cv">PROF. C.V</option>
+    <option value="passport">INSTANT PASSPORT</option>
+    <option value="scanning">SCANNING</option>
+    <option value="lamination">LAMINATION</option>
+    <option value="poster">POSTER DESIGNING</option>
+    <option value="businesscards">BUSINESS CARDS</option>
+    <option value="weddingcards">WEDDING CARDS</option>
+    <option value="windows">WINDOWS INSTALLATION</option>
+    <option value="browsing">BROWSING</option>
+    <option value="kra">KRA ITAX</option>
+  </select>
+
+  <!-- Where forms will appear -->
+  <div id="formContainer" class="form-container"></div>
+
+  <script>
+    const { jsPDF } = window.jspdf;
+    const { Document, Packer, Paragraph, TextRun } = window.docx;
+
+    const searchBox = document.getElementById("searchBox");
+    const serviceList = document.getElementById("serviceList");
+    const formContainer = document.getElementById("formContainer");
+
+    // 🔎 Search filter
+    searchBox.addEventListener("keyup", function() {
+      let filter = searchBox.value.toLowerCase();
+      let options = serviceList.options;
+      for (let i = 0; i < options.length; i++) {
+        let text = options[i].text.toLowerCase();
+        options[i].style.display = text.includes(filter) ? "" : "none";
+      }
+    });
+
+    // 📝 Forms for services
+    const forms = {
+      application: `
+        <h4>Application Letter Form</h4>
+        <label>Full Name:</label><br>
+        <input type="text" id="appName"><br>
+        <label>Position Applied For:</label><br>
+        <input type="text" id="appPosition"><br>
+        <button onclick="generateApplication('pdf')">Download PDF</button>
+        <button onclick="generateApplication('docx')">Download Word</button>
+      `,
+      cv: `
+        <h4>Curriculum Vitae Form</h4>
+        <label>Full Name:</label><br>
+        <input type="text" id="cvName"><br>
+        <label>Email:</label><br>
+        <input type="email" id="cvEmail"><br>
+        <label>Work Experience:</label><br>
+        <textarea id="cvExperience"></textarea><br>
+        <button onclick="generateCV('pdf')">Download PDF</button>
+        <button onclick="generateCV('docx')">Download Word</button>
+      `,
+      kra: `
+        <h4>KRA iTax Access</h4>
+        <p>Click below to open the official KRA iTax system.</p>
+        <button onclick="window.open('https://itax.kra.go.ke/', '_blank')">Go to iTax</button>
+      `,
+      browsing: `
+        <h4>Browsing Service</h4>
+        <p>Redirect to Google search.</p>
+        <button onclick="window.open('https://www.google.com/', '_blank')">Start Browsing</button>
+      `,
+      windows: `
+        <h4>Windows Installation</h4>
+        <p>Download Windows installation guide.</p>
+        <button onclick="window.open('https://www.microsoft.com/software-download/windows10', '_blank')">Go to Microsoft</button>
+      `
+    };
+
+    // 🎯 Show form based on selection
+    serviceList.addEventListener("change", function() {
+      let selected = serviceList.value;
+      if (forms[selected]) {
+        formContainer.innerHTML = forms[selected];
+        formContainer.style.display = "block";
+      } else {
+        formContainer.innerHTML = "<p>Form not available for this service yet.</p>";
+        formContainer.style.display = "block";
+      }
+    });
+
+    // 📄 PDF & Word Generation
+    function generateApplication(format) {
+      let name = document.getElementById("appName").value || "Applicant";
+      let position = document.getElementById("appPosition").value || "Job Title";
+
+      if (format === "pdf") {
+        const doc = new jsPDF();
+        doc.text("Application Letter", 10, 10);
+        doc.text(`Dear Sir/Madam,`, 10, 20);
+        doc.text(`I, ${name}, wish to apply for the position of ${position}.`, 10, 30);
+        doc.text("Kind regards,", 10, 40);
+        doc.text(name, 10, 50);
+        doc.save("Application_Letter.pdf");
+      } else {
+        const doc = new Document({
+          sections: [{
+            children: [
+              new Paragraph({ children: [new TextRun({ text: "Application Letter", bold: true })] }),
+              new Paragraph("Dear Sir/Madam,"),
+              new Paragraph(`I, ${name}, wish to apply for the position of ${position}.`),
+              new Paragraph("Kind regards,"),
+              new Paragraph(name)
+            ]
+          }]
+        });
+        Packer.toBlob(doc).then(blob => saveAs(blob, "Application_Letter.docx"));
+      }
+    }
+
+    function generateCV(format) {
+      let name = document.getElementById("cvName").value || "Your Name";
+      let email = document.getElementById("cvEmail").value || "email@example.com";
+      let exp = document.getElementById("cvExperience").value || "Experience details here.";
+
+      if (format === "pdf") {
+        const doc = new jsPDF();
+        doc.text("Curriculum Vitae", 10, 10);
+        doc.text(`Name: ${name}`, 10, 20);
+        doc.text(`Email: ${email}`, 10, 30);
+        doc.text("Work Experience:", 10, 40);
+        doc.text(exp, 10, 50);
+        doc.save("CV.pdf");
+      } else {
+        const doc = new Document({
+          sections: [{
+            children: [
+              new Paragraph({ children: [new TextRun({ text: "Curriculum Vitae", bold: true, size: 28 })] }),
+              new Paragraph(`Name: ${name}`),
+              new Paragraph(`Email: ${email}`),
+              new Paragraph("Work Experience:"),
+              new Paragraph(exp)
+            ]
+          }]
+        });
+        Packer.toBlob(doc).then(blob => saveAs(blob, "CV.docx"));
+      }
+    }
+
+    // Helper for saving Word
+    function saveAs(blob, filename) {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+  </script>
+</body>
+</html>
